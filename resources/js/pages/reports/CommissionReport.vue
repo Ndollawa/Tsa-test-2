@@ -493,9 +493,13 @@ function applyFilters() {
 // RESET FILTERS
 // ---------------------
 function resetFilters() {
+    distributor.value = undefined;
+    invoice.value = undefined;
+    dateFromCalendar.value = null;
+    dateToCalendar.value = null;
     const query = clean({
-        // per_page: perPage.value,
-        // page: 1,
+        per_page: perPage.value,
+        page: 1,
     });
 
     router.get(route("commission-report"), query, {
@@ -524,19 +528,16 @@ const { openWith, open, closeModal } = usePersistentDialog("showInvoice");
 const currentOrder = ref<any | null>(null);
 const currentItems = ref<any[]>([]);
 
-
-
-
 async function openDetails(orderId: number) {
     // openWith(String(orderId));
     await router.get(
-        route('order-details', { order: orderId }),
+        route("order-details", { order: orderId }),
         {},
         {
-            preserveState: true,     // keeps the current page state
-            preserveScroll: true,    // keeps scroll
-            only: ['detail'],        // only fetch these props
-            replace: false,          // do NOT change URL in browser
+            preserveState: true, // keeps the current page state
+            preserveScroll: true, // keeps scroll
+            only: ["detail"], // only fetch these props
+            replace: false, // do NOT change URL in browser
             onSuccess: (page) => {
                 currentOrder.value = page.props?.detail?.order;
                 currentItems.value = page.props?.detail?.items;

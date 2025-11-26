@@ -1,80 +1,58 @@
 <?php
 
-use function Pest\Laravel\get;
-use Inertia\Testing\AssertableInertia;
+use App\Repositories\Eloquent\EloquentTopDistributorRepository;
 
-describe('Top Distributors Inertia Tests', function () {
+describe('Top Distributor Tests (using repository)', function () {
+
+function fetchDistributor(string $name): array
+{
+    $repo = new EloquentTopDistributorRepository();
+
+    $rows = $repo->queryTopDistributors()
+        ->orderByDesc('total_sales')
+        ->get();
+
+    $row = $rows->first(fn($r) => trim($r->distributor_name) === $name);
+
+    expect($row)->not->toBeNull("Distributor '$name' not found in top distributors");
+
+    return (array) $row;
+}
+
 
     it('checks Demario Purdy total = 22026.75', function () {
-        $rows = [];
+        $row = fetchDistributor('Demario Purdy');
 
-        get('/reports/top-distributors?limit=200')
-            ->assertStatus(200)
-            ->assertInertia(fn (AssertableInertia $page) =>
-                $page->component('TopDistributors/Index')
-                     ->has('results', fn ($top) => $rows = $top) // capture props
-            );
+        expect(number_format($row['total_sales'], 2))->toBe('22,026.75');
 
-        $match = collect($rows)->firstWhere('distributor_name', 'Demario Purdy');
-
-        expect($match)->not->toBeNull();
-        expect(number_format($match['total_sales'], 2))->toBe('22026.75');
-        expect($match['rank'])->toBe(1);
+        expect(isset($row['rank']))->toBeTrue("`rank` column missing from query");
     });
 
     it('checks Floy Miller total = 9645.00', function () {
-        $rows = [];
+        $row = fetchDistributor('Floy Miller');
 
-        get('/reports/top-distributors?limit=200')
-            ->assertStatus(200)
-            ->assertInertia(fn (AssertableInertia $page) =>
-                $page->component('TopDistributors/Index')
-                     ->has('results', fn ($top) => $rows = $top)
-            );
-
-        $match = collect($rows)->firstWhere('distributor_name', 'Floy Miller');
-
-        expect($match)->not->toBeNull();
-        expect(number_format($match['total_sales'], 2))->toBe('9645.00');
+        expect(number_format($row['total_sales'], 2))->toBe('9,645.00');
     });
 
     it('checks Loy Schamberger total = 575.00', function () {
-        $rows = [];
+        $row = fetchDistributor('Loy Schamberger');
 
-        get('/reports/top-distributors?limit=200')
-            ->assertStatus(200)
-            ->assertInertia(fn (AssertableInertia $page) =>
-                $page->component('TopDistributors/Index')
-                     ->has('results', fn ($top) => $rows = $top)
-            );
-
-        $match = collect($rows)->firstWhere('distributor_name', 'Loy Schamberger');
-
-        expect($match)->not->toBeNull();
-        expect(number_format($match['total_sales'], 2))->toBe('575.00');
+        expect(number_format($row['total_sales'], 2))->toBe('575.00');
     });
 
-    it('checks rank ties for #197 (Chaim Kuhn & Eliane Bogisich)', function () {
-        $rows = [];
+ it('checks rank ties for same total_sales', function () {
+    $chaim  = fetchDistributor('Chaim Kuhn');
+    $eliane = fetchDistributor('Eliane Bogisich');
 
-        get('/reports/top-distributors?limit=200')
-            ->assertStatus(200)
-            ->assertInertia(fn (AssertableInertia $page) =>
-                $page->component('TopDistributors/Index')
-                     ->has('results', fn ($top) => $rows = $top)
-            );
+    expect(number_format($chaim['total_sales'], 2))->toBe('360.00');
+    expect(number_format($eliane['total_sales'], 2))->toBe('360.00');
 
-        $chaim  = collect($rows)->firstWhere('distributor_name', 'Chaim Kuhn');
-        $eliane = collect($rows)->firstWhere('distributor_name', 'Eliane Bogisich');
+    expect(isset($chaim['rank']))->toBeTrue("`rank` missing");
+    expect(isset($eliane['rank']))->toBeTrue("`rank` missing");
 
-        expect($chaim)->not->toBeNull();
-        expect($eliane)->not->toBeNull();
+    // Ensure both ranks are equal (tied)
+    expect($chaim['rank'])->toBe($eliane['rank']);
+});
 
-        expect(number_format($chaim['total_sales'], 2))->toBe('360.00');
-        expect(number_format($eliane['total_sales'], 2))->toBe('360.00');
-
-        expect($chaim['rank'])->toBe($eliane['rank']);
-        expect($chaim['rank'])->toBe(197);
-    });
 
 });

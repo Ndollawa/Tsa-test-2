@@ -37,11 +37,9 @@ class TopDistributorController extends Controller
         ->appends($request->query());          // keep filters in URL
 
 
-    // Apply ranking AFTER pagination
-    $paginator = $this->service->applyRanks($results);
     return Inertia::render('reports/TopDistributors', [
         'filters' => $filters,
-        'results' => $paginator,
+        'results' => $results,
         'per_page' => $perPage,
         'limit'    => $limit,
     ]);
