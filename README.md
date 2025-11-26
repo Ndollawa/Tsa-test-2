@@ -115,7 +115,7 @@ import the nxm_assessment_2023.sql in the root dir into the nxm_assessment_2023 
 ```
 
 
-3. (Optional) Seed sample data:
+3. Create database Views via migration:
 
 
 ```bash
