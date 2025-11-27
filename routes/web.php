@@ -13,6 +13,6 @@ Route::get('/', function () {
 Route::get('/reports/commission', [CommissionReportController::class, 'index'])
     ->name('commission-report');
 
-Route::get('/order-details/{order}', [CommissionReportController::class, 'show'])->name('order-details');
+Route::post('/reports/commission', [CommissionReportController::class, 'show'])->name('order-details');
 
 Route::get('/reports/top-distributors', [TopDistributorController::class, 'index'])->name('top-distributors');

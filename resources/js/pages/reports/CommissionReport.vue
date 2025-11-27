@@ -126,7 +126,7 @@
 
                     <div class="flex gap-4 pt-2 justify-between w-full">
                         <div class="text-sm text-muted-foreground">
-                            Total:
+                            Total Record(s):
                             <span class="font-medium">{{
                                 props?.results?.total ?? 0
                             }}</span>
@@ -146,15 +146,14 @@
                                 @click="applyFilters"
                                 class="text-sm px-8 bg-primary/80 cursor-pointer"
                             >
-                                Apply Filters {{ open }}
+                                Apply Filters
                             </Button>
                         </div>
                     </div>
                 </CardContent>
             </Card>
             <!-- TABLE -->
-            <!-- <InvoiceModal :order="currentOrder"
-  :items="currentItems"/> -->
+            <InvoiceModal :order="currentOrder" :items="currentItems" />
 
             <Card>
                 <CardContent class="p-0">
@@ -230,21 +229,16 @@
                                         </TableCell>
                                         <TableCell class="px-6 py-4">
                                             <div class="">
-                                                <InvoiceModal
-                                                    :order="currentOrder"
-                                                    :items="currentItems"
-                                                >
-                                                    <Button
-                                                        variant="link"
-                                                        type="button"
-                                                        class="font-medium cursor-pointer text-blue-600 hover:underline"
-                                                        @click="
-                                                            openDetails(
-                                                                row.order_id,
-                                                            )
-                                                        "
-                                                        >View Invoice</Button
-                                                    ></InvoiceModal
+                                                <Button
+                                                    variant="link"
+                                                    type="button"
+                                                    class="font-medium cursor-pointer text-blue-600 hover:underline"
+                                                    @click="
+                                                        openDetails(
+                                                            row.order_id,
+                                                        )
+                                                    "
+                                                    >View Invoice</Button
                                                 >
                                             </div>
                                         </TableCell>
@@ -429,6 +423,7 @@ import { usePersistentDialog } from "@/composables/usePersistentDialog";
 import InvoiceModal from "@/components/pages/InvoiceModal.vue";
 import MainLayout from "@/layouts/MainLayout.vue";
 import { useShortPagination } from "@/composables";
+import axios from "axios";
 
 // shadcn components
 
@@ -439,6 +434,8 @@ const props = defineProps({
     results: Object,
     per_page: Number,
 });
+
+const page = usePage()
 
 const shortLinks = useShortPagination(props.results, 5);
 
@@ -498,8 +495,8 @@ function resetFilters() {
     dateFromCalendar.value = null;
     dateToCalendar.value = null;
     const query = clean({
-        per_page: perPage.value,
-        page: 1,
+        // per_page: perPage.value,
+        // page: 1,
     });
 
     router.get(route("commission-report"), query, {
@@ -524,25 +521,32 @@ function go(url: string) {
 // ---------------------
 // INVIOCE
 // ---------------------
-const { openWith, open, closeModal } = usePersistentDialog("showInvoice");
-const currentOrder = ref<any | null>(null);
-const currentItems = ref<any[]>([]);
+const { openWith, closeModal } = usePersistentDialog("showInvoice")
 
-async function openDetails(orderId: number) {
-    // openWith(String(orderId));
-    await router.get(
-        route("order-details", { order: orderId }),
-        {},
-        {
-            preserveState: true, // keeps the current page state
-            preserveScroll: true, // keeps scroll
-            only: ["detail"], // only fetch these props
-            replace: false, // do NOT change URL in browser
-            onSuccess: (page) => {
-                currentOrder.value = page.props?.detail?.order;
-                currentItems.value = page.props?.detail?.items;
-            },
-        },
-    );
+const currentOrder = ref(null)
+const currentItems = ref([])
+
+async function openDetails(orderId:string) {
+    const args = { orderId }
+
+    openWith(String(orderId));
+    const { data } = await axios.post(route('order-details'), { orderId });
+    console.log(data)
+currentOrder.value = data?.detail?.order;
+currentItems.value = data?.detail?.items;
+
 }
+
+
+// Watch query param
+onMounted(
+  () => {
+    const params = new URLSearchParams(page.url.split("?")[1] ?? "")
+    const inv = params.get("inv")
+    if (inv) {
+      openDetails(inv)
+    }
+  },
+)
+
 </script>

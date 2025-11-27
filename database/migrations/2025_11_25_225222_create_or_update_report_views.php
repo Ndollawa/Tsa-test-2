@@ -179,21 +179,22 @@ return new class extends Migration
         // v_top_distributors
         DB::statement('DROP VIEW IF EXISTS v_top_distributors');
         DB::statement("
-            CREATE VIEW v_top_distributors AS
-            SELECT
-                r_user.id AS distributor_id,
-                CONCAT(r_user.first_name, ' ', r_user.last_name) AS distributor_name,
-                SUM(p.price * oi.quantity) AS total_sales,
-                RANK() OVER (ORDER BY SUM(p.price * oi.quantity) DESC) AS rank
-            FROM orders o
-            JOIN users purchaser ON purchaser.id = o.purchaser_id
-            JOIN users ref ON ref.id = purchaser.referred_by
-            JOIN user_category uc ON uc.user_id = ref.id
-            JOIN categories c ON c.id = uc.category_id AND c.name = 'Distributor'
-            JOIN users r_user ON r_user.id = ref.id
-            JOIN order_items oi ON oi.order_id = o.id
-            JOIN products p ON p.id = oi.product_id
-            GROUP BY r_user.id, r_user.first_name, r_user.last_name
+CREATE VIEW v_top_distributors AS
+SELECT
+    d.id AS distributor_id,
+    CONCAT(d.first_name, ' ', d.last_name) AS distributor_name,
+    COALESCE(SUM(p.price * oi.quantity), 0) AS total_sales,
+    RANK() OVER (
+        ORDER BY COALESCE(SUM(p.price * oi.quantity), 0) DESC
+    ) AS rank
+FROM users d
+JOIN user_category uc ON uc.user_id = d.id
+JOIN categories c ON c.id = uc.category_id AND c.name = 'Distributor'
+LEFT JOIN users purchaser ON purchaser.referred_by = d.id
+LEFT JOIN orders o ON o.purchaser_id = purchaser.id
+LEFT JOIN order_items oi ON oi.order_id = o.id
+LEFT JOIN products p ON p.id = oi.product_id
+GROUP BY d.id, d.first_name, d.last_name
         ");
 
 

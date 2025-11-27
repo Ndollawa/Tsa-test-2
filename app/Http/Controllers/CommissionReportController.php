@@ -40,14 +40,22 @@ class CommissionReportController extends Controller
     /**
      * GET /commission-report/{orderId}
      */
-    public function show(int $orderId)
-    {
-        $detail = $this->service->getOrderDetails($orderId);
-        if (!$detail) {
-            return response()->json(['message' => 'Not found'], 404);
-        }
-         return Inertia::render('reports/CommissionReport', [
-            'detail' => $detail,
-        ]);
+ public function show(Request $request)
+{
+
+    $orderId = $request->input('orderId');
+    $detail = $this->service->getOrderDetails($orderId);
+
+    if (!$detail) {
+        return response()->json(['message' => 'Not found'], 404);
     }
+
+        return response()->json(['detail' => $detail]);
+
+
+    // return Inertia::render('reports/CommissionReport', [
+    //     'detail' => $detail,
+    // ]);
+}
+
 }
