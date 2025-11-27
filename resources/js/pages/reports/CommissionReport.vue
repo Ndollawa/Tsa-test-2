@@ -528,12 +528,11 @@ const currentItems = ref([])
 
 async function openDetails(orderId:string) {
     const args = { orderId }
-
-    openWith(String(orderId));
     const { data } = await axios.post(route('order-details'), { orderId });
-    console.log(data)
 currentOrder.value = data?.detail?.order;
 currentItems.value = data?.detail?.items;
+
+    openWith(String(orderId));
 
 }
 
